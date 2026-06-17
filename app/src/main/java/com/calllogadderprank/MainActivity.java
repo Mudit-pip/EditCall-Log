@@ -8,14 +8,17 @@ import android.app.TimePickerDialog;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.provider.CallLog;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
-import android.widget.NumberPicker;
+import android.widget.LinearLayout;
 import android.widget.RadioButton;
+import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
@@ -39,10 +42,11 @@ public class MainActivity extends AppCompatActivity {
     DatePickerDialog datePickerDialog;
     Button timepick, datepick;
     int hour, minute;
-    String ap, strmonth;
+    String strmonth;
     int arYear, arMonth, arDay;
     int type = 0; // 1==missed 2==outgoing 3==incomming 0==error
-    int duration_min = 5;
+    int duration_min = 0;
+    int duration_sec = 0;
 
     RadioButton missed_btn, out_btn, incomming_btn;
     Button numberpick_btn, durationpick_btn;
@@ -126,19 +130,82 @@ public class MainActivity extends AppCompatActivity {
         durationpick_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                NumberPicker np = new NumberPicker(MainActivity.this);
-                np.setMinValue(1);
-                np.setMaxValue(120);
+                LinearLayout layout = new LinearLayout(MainActivity.this);
+                layout.setOrientation(LinearLayout.VERTICAL);
+                layout.setPadding(40, 10, 40, 10);
+
+                // Clock face TimePicker for duration — start at 00:00 (12 o'clock top)
+                // Hour hand at top (0), minute hand preserves existing seconds
+                TimePicker durationPicker = new TimePicker(MainActivity.this);
+                durationPicker.setIs24HourView(true);
+                durationPicker.setHour(0);
+                durationPicker.setMinute(0);
+                durationPicker.setEnabled(true);
+                layout.addView(durationPicker);
+
+                // Total label
+                TextView totalLabel = new TextView(MainActivity.this);
+                totalLabel.setGravity(Gravity.CENTER);
+                totalLabel.setTextSize(18);
+                totalLabel.setTextColor(Color.BLACK);
+                totalLabel.setPadding(0, 10, 0, 10);
+                layout.addView(totalLabel);
+
+                // Extra minutes start at 0 — clock face directly represents total duration
+                final int[] extraMinutes = {0};
+
+                // Quick-adjust buttons layout
+                LinearLayout btnLayout = new LinearLayout(MainActivity.this);
+                btnLayout.setOrientation(LinearLayout.HORIZONTAL);
+                btnLayout.setGravity(Gravity.CENTER);
+
+                Button minusBtn = new Button(MainActivity.this);
+                minusBtn.setText("-15m");
+                minusBtn.setPadding(20, 8, 20, 8);
+                btnLayout.addView(minusBtn);
+
+                Button plusBtn = new Button(MainActivity.this);
+                plusBtn.setText("+15m");
+                plusBtn.setPadding(20, 8, 20, 8);
+                btnLayout.addView(plusBtn);
+
+                layout.addView(btnLayout);
+
+                // Update total label helper
+                Runnable updateLabel = () -> {
+                    int totalMin = durationPicker.getHour() + extraMinutes[0];
+                    int totalSec = durationPicker.getMinute();
+                    totalLabel.setText("Total: " + totalMin + " min " + totalSec + " sec");
+                };
+
+                durationPicker.setOnTimeChangedListener((picker, hourOfDay, minuteOfDay) -> updateLabel.run());
+
+                minusBtn.setOnClickListener(btn -> {
+                    extraMinutes[0] = Math.max(0, extraMinutes[0] - 15);
+                    updateLabel.run();
+                });
+
+                plusBtn.setOnClickListener(btn -> {
+                    extraMinutes[0] = Math.min(120, extraMinutes[0] + 15);
+                    updateLabel.run();
+                });
+
+                updateLabel.run();
 
                 AlertDialog.Builder ab = new AlertDialog.Builder(MainActivity.this);
-                ab.setTitle("Duration of call(minutes)");
-                ab.setView(np);
+                ab.setTitle("Duration (min : sec)");
+                ab.setView(layout);
                 ab.setNegativeButton("cancel", null);
                 ab.setPositiveButton("set", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        duration_min = np.getValue();
-                        durationpick_btn.setText(duration_min+" minutes");
+                        duration_min = durationPicker.getHour() + extraMinutes[0];
+                        duration_sec = durationPicker.getMinute();
+                        if (duration_sec > 0) {
+                            durationpick_btn.setText(duration_min + " min " + duration_sec + " sec");
+                        } else {
+                            durationpick_btn.setText(duration_min + " minutes");
+                        }
                     }
                 });
                 ab.create().show();
@@ -208,7 +275,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                if(arYear == 0 || ap == null || mobilenumber == null){
+                if(arYear == 0 || timepick.getText().toString().equals("Choose") || mobilenumber == null){
                     Toast.makeText(MainActivity.this, "fill all necessary details", Toast.LENGTH_SHORT).show();
                 } else {
                     Calendar cal = Calendar.getInstance();
@@ -223,7 +290,7 @@ public class MainActivity extends AppCompatActivity {
                     ContentValues values = new ContentValues();
                     values.put(android.provider.CallLog.Calls.NUMBER, mobilenumber);
                     values.put(android.provider.CallLog.Calls.DATE, cal.getTimeInMillis());
-                    values.put(android.provider.CallLog.Calls.DURATION, duration_min * 60);
+                    values.put(android.provider.CallLog.Calls.DURATION, duration_min * 60 + duration_sec);
 
 
                     if (type == 0) {
@@ -268,37 +335,14 @@ public class MainActivity extends AppCompatActivity {
                 hour = selectedHour;
                 minute = selectedMinute;
 
-                int arhour = hour;
+                String strhour = hour < 10 ? "0" + hour : "" + hour;
+                String strmin = minute < 10 ? "0" + minute : "" + minute;
 
-                if (hour >= 12) {
-                    arhour=arhour-12;
-                    ap = "pm";
-                } else if (hour < 12) {
-                    ap = "am";
-                }
-
-                String strhour;
-                String strmin;
-
-                if (arhour < 10) {
-                    strhour = "0" + arhour;
-                } else {
-                    strhour = "" + arhour;
-                }
-
-                if (minute < 10) {
-                    strmin = "0" + minute;
-                } else {
-                    strmin = "" + minute;
-                }
-
-
-                timepick.setText(strhour + " : " + strmin + " " + ap);
+                timepick.setText(strhour + " : " + strmin);
             }
         };
 
-        int style = AlertDialog.THEME_HOLO_LIGHT;
-        TimePickerDialog timePickerDialog = new TimePickerDialog(this, style, onTimeSetListener, hour, minute, false);
+        TimePickerDialog timePickerDialog = new TimePickerDialog(this, onTimeSetListener, hour, minute, true);
         timePickerDialog.setTitle("Select Time");
         timePickerDialog.show();
     }
@@ -349,8 +393,7 @@ public class MainActivity extends AppCompatActivity {
         int day = cal.get(Calendar.DAY_OF_MONTH);
 
 
-        int style = AlertDialog.THEME_HOLO_LIGHT;
-        datePickerDialog = new DatePickerDialog(this, style, dateSetListener, year, month, day);
+        datePickerDialog = new DatePickerDialog(this, dateSetListener, year, month, day);
         datePickerDialog.setTitle("Select Date");
         datePickerDialog.show();
 
