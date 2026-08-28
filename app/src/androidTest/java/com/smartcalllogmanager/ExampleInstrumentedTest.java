@@ -1,4 +1,4 @@
-package com.calllogadderprank;
+package com.smartcalllogmanager;
 
 import android.content.Context;
 
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
     public void useAppContext() {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        assertEquals("com.contactmanager", appContext.getPackageName());
+        assertEquals("com.smartcalllogmanager", appContext.getPackageName());
     }
 }

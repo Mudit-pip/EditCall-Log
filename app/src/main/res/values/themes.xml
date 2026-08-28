@@ -1,7 +1,9 @@
 <resources>
     <!-- Base application theme. -->
         <style name="Base.Theme.ContactManager" parent="Theme.Material3.DayNight.NoActionBar">
-            <item name="colorPrimaryDark">@color/md_red_300</item>
+            <item name="colorPrimary">#2563EB</item>
+            <item name="colorSecondary">#3B82F6</item>
+            <item name="android:windowBackground">#F7F9FA</item>
         </style>
 
     <style name="Theme.ContactManager" parent="Base.Theme.ContactManager" />

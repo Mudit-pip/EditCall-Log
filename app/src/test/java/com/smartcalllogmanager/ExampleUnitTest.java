@@ -1,4 +1,4 @@
-package com.calllogadderprank;
+package com.smartcalllogmanager;
 
 import org.junit.Test;
 
