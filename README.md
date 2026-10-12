@@ -24,7 +24,7 @@ https://github.com/Mudit-pip/EditCall-Log/assets/70972592/f96ff2b0-306a-4e39-9de
 ## Installation
 
 ### Option 1: Download APK
-Download the latest APK directly from the [Downloads](./app/build/outputs/apk/debug/) folder, or grab the latest build artifact from the [Actions tab](https://github.com/Mudit-pip/EditCall-Log/actions).
+Download the latest APK directly from the [Download Latest APK](https://github.com/Mudit-pip/EditCall-Log/releases/latest/download/app-debug.apk)folder.
 
 ### Option 2: Build from source
 ```bash
